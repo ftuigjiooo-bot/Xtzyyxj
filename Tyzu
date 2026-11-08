@@ -1,0 +1,174 @@
+--[========================================================--
+--                  Script Name: AOii😈 v3                  --
+--========================================================--]
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+local Humanoid = Character:WaitForChild("Humanoid")
+
+-- สร้างหน้าต่าง GUI หลัก
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "AOii_v3_Gui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+-- กรอบหลัก (Main Frame)
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 220, 0, 260)
+MainFrame.Position = UDim2.new(0.05, 0, 0.2, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+-- มุมโค้ง
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = MainFrame
+
+-- หัวข้อสคริปต์
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.BackgroundTransparency = 1
+Title.Text = "AOii😈 v3"
+Title.TextColor3 = Color3.fromRGB(255, 0, 0)
+Title.TextSize = 20
+Title.Font = Enum.Font.GothamBold
+Title.Parent = MainFrame
+
+-- ฟังก์ชันสร้างปุ่มกด
+local function createButton(name, positionY, text)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0.85, 0, 0, 45)
+	btn.Position = UDim2.new(0.075, 0, 0, positionY)
+	btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.TextSize = 15
+	btn.Font = Enum.Font.GothamSemibold
+	btn.Text = text
+	btn.Name = name
+	btn.Parent = MainFrame
+	
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 8)
+	corner.Parent = btn
+	
+	return btn
+end
+
+local FlyBtn = createButton("FlyBtn", 50, "บินท่าซุปเปอร์แมน: ปิด")
+local InvisibilityBtn = createButton("InvisibilityBtn", 105, "ล่องหน: ปิด")
+local TigerBtn = createButton("TigerBtn", 160, "แปลงร่างเป็นเสือ: ปิด")
+
+-- ตัวแปรสถานะ
+local flying = false
+local invisible = false
+local tigerMode = false
+local flySpeed = 50
+local bodyVelocity, bodyGyro
+
+-- 1. ฟังก์ชันบินท่าซุปเปอร์แมน
+FlyBtn.MouseButton1Click:Connect(function()
+	flying = not flying
+	local char = LocalPlayer.Character
+	if not char then return end
+	local root = char:FindFirstChild("HumanoidRootPart")
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	
+	if flying then
+		FlyBtn.Text = "บินท่าซุปเปอร์แมน: เปิด"
+		FlyBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+		
+		bodyVelocity = Instance.new("BodyVelocity")
+		bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+		bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+		bodyVelocity.Parent = root
+		
+		bodyGyro = Instance.new("BodyGyro")
+		bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+		bodyGyro.Parent = root
+		
+		task.spawn(function()
+			while flying and char and root do
+				local cam = workspace.CurrentCamera
+				bodyGyro.CFrame = cam.CFrame
+				bodyVelocity.Velocity = cam.CFrame.LookVector * flySpeed
+				hum.PlatformStand = true
+				task.wait()
+			end
+		end)
+	else
+		FlyBtn.Text = "บินท่าซุปเปอร์แมน: ปิด"
+		FlyBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+		if bodyVelocity then bodyVelocity:Destroy() end
+		if bodyGyro then bodyGyro:Destroy() end
+		if hum then hum.PlatformStand = false end
+	end
+end)
+
+-- 2. ฟังก์ชันล่องหน
+InvisibilityBtn.MouseButton1Click:Connect(function()
+	invisible = not invisible
+	local char = LocalPlayer.Character
+	if not char then return end
+	
+	if invisible then
+		InvisibilityBtn.Text = "ล่องหน: เปิด"
+		InvisibilityBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+		for _, part in ipairs(char:GetDescendants()) do
+			if part:IsA("BasePart") or part:IsA("Decal") then
+				part.Transparency = 1
+			end
+		end
+	else
+		InvisibilityBtn.Text = "ล่องหน: ปิด"
+		InvisibilityBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+		for _, part in ipairs(char:GetDescendants()) do
+			if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+				part.Transparency = 0
+			elseif part:IsA("Decal") then
+				part.Transparency = 0
+			end
+		end
+	end
+end)
+
+-- 3. ฟังก์ชันแปลงร่างเป็นเสือ (ปรับขนาดตัวและเปลี่ยนโทนสีเป็นลายเสือส้มดำคร่าวๆ)
+TigerBtn.MouseButton1Click:Connect(function()
+	tigerMode = not tigerMode
+	local char = LocalPlayer.Character
+	if not char then return end
+	local humanoid = char:FindFirstChildOfClass("Humanoid")
+	
+	if tigerMode then
+		TigerBtn.Text = "แปลงร่างเป็นเสือ: เปิด"
+		TigerBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+		
+		-- ปรับความเร็วและกระโดดให้สมกับเป็นเสือ
+		humanoid.WalkSpeed = 30
+		humanoid.JumpPower = 80
+		
+		-- ย้อมสีตัวละครให้โทนส้ม/ดำแบบเสือ
+		for _, part in ipairs(char:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.Color = Color3.fromRGB(218, 115, 0) -- สีส้มเสือ
+			end
+		end
+	else
+		TigerBtn.Text = "แปลงร่างเป็นเสือ: ปิด"
+		TigerBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+		
+		humanoid.WalkSpeed = 16
+		humanoid.JumpPower = 50
+		
+		-- คืนค่าสีเดิม (รีเซ็ตตัวละครใหม่หรือคืนค่าเริ่มต้นตามตัวละครผู้เล่น)
+		for _, part in ipairs(char:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.Color = Color3.fromRGB(245, 205, 165) -- สีผิวปกติ
+			end
+		end
+	end
+end)
